@@ -5,8 +5,8 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-APP_PY="$ROOT/dist/XRKConverter.app/Contents/Resources/python/bin/python3"
-APP_SC="$ROOT/dist/XRKConverter.app/Contents/Resources/xrk2csv.py"
+APP_PY="$ROOT/dist/Trace.app/Contents/Resources/python/bin/python3"
+APP_SC="$ROOT/dist/Trace.app/Contents/Resources/xrk2csv.py"
 VENV_PY="$ROOT/.venv/bin/python3"
 
 if [ -x "$APP_PY" ] && [ -f "$APP_SC" ]; then

@@ -44,10 +44,10 @@ XRKConverter/
 ├── branding/               # logo: trace-appicon.svg, AppIcon.icns, wordmark, mono mark
 ├── scripts/
 │   ├── bundle_python.sh     # download python-build-standalone + pip install libxrk
-│   ├── build_app.sh         # swift build + assemble XRKConverter.app (embeds AppIcon.icns)
+│   ├── build_app.sh         # swift build + assemble Trace.app (embeds AppIcon.icns)
 │   └── build_icons.sh       # regenerate AppIcon.icns from the SVG master
 ├── samples/                 # test .xrk files + a RaceStudio reference .csv
-└── dist/XRKConverter.app    # the built application
+└── dist/Trace.app    # the built application
 ```
 
 The Swift UI never parses anything itself — it shells out to
@@ -67,7 +67,7 @@ bash scripts/bundle_python.sh
 bash scripts/build_app.sh
 
 # 3. Run it
-open dist/XRKConverter.app
+open dist/Trace.app
 ```
 
 ## Use
@@ -165,7 +165,7 @@ Test layout:
 - **`.github/workflows/ci.yml`** (push/PR): ruff lint → 95% coverage gate →
   end-to-end validation on macOS, plus a **Trivy** CVE/secret/misconfig scan.
 - **`.github/workflows/release.yml`** (push a `v*` tag): re-runs the gate, then
-  builds `XRKConverter.app`, packages a **`.dmg` + `.zip` (+ SHA256SUMS)**, and
+  builds `Trace.app`, packages a **`.dmg` + `.zip` (+ SHA256SUMS)**, and
   publishes them to a **GitHub Release** you can download directly.
 
   ```bash
@@ -177,7 +177,7 @@ Test layout:
 The release workflow **signs (Developer ID + hardened runtime) and notarizes**
 the build automatically — but only when the required secrets are set. Without
 them it falls back to an ad-hoc signature (first launch then needs a right-click
-→ Open, or `xattr -dr com.apple.quarantine XRKConverter.app`).
+→ Open, or `xattr -dr com.apple.quarantine Trace.app`).
 
 To enable warning-free downloads, add these **GitHub repository secrets**
 (Settings → Secrets and variables → Actions):

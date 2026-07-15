@@ -69,8 +69,8 @@ jobs:
       - name: Build DMG
         run: |
           cd dist
-          hdiutil create -volname "XRK to CSV" -srcfolder XRKConverter.app \
-            -ov -format UDZO XRKConverter-macos-arm64.dmg
+          hdiutil create -volname "Trace" -srcfolder Trace.app \
+            -ov -format UDZO Trace-macos-arm64.dmg
 
       - name: Notarize & staple
         if: ${{ env.SIGNING_ENABLED == 'true' }}
@@ -83,23 +83,23 @@ jobs:
           echo "$KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/AuthKey.p8"
           export NOTARY_KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
           # Notarize the DMG, then staple both the DMG and the app inside it.
-          bash scripts/notarize.sh dist/XRKConverter-macos-arm64.dmg dist/XRKConverter.app
+          bash scripts/notarize.sh dist/Trace-macos-arm64.dmg dist/Trace.app
           rm -f "$RUNNER_TEMP/AuthKey.p8"
 
       - name: Package zip + checksums
         run: |
           cd dist
-          ditto -c -k --keepParent XRKConverter.app XRKConverter-macos-arm64.zip
-          shasum -a 256 XRKConverter-macos-arm64.dmg XRKConverter-macos-arm64.zip > SHA256SUMS.txt
+          ditto -c -k --keepParent Trace.app Trace-macos-arm64.zip
+          shasum -a 256 Trace-macos-arm64.dmg Trace-macos-arm64.zip > SHA256SUMS.txt
           ls -lh
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: XRKConverter-macos-arm64
+          name: Trace-macos-arm64
           path: |
-            dist/XRKConverter-macos-arm64.zip
-            dist/XRKConverter-macos-arm64.dmg
+            dist/Trace-macos-arm64.zip
+            dist/Trace-macos-arm64.dmg
             dist/SHA256SUMS.txt
 
       - name: Publish GitHub Release
@@ -107,20 +107,20 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/XRKConverter-macos-arm64.zip
-            dist/XRKConverter-macos-arm64.dmg
+            dist/Trace-macos-arm64.zip
+            dist/Trace-macos-arm64.dmg
             dist/SHA256SUMS.txt
           generate_release_notes: true
           body: |
             ## XRK → RaceChrono CSV — macOS (Apple Silicon)
 
-            Download **XRKConverter-macos-arm64.dmg**, open it, and drag the app to
+            Download **Trace-macos-arm64.dmg**, open it, and drag the app to
             Applications. Drop an `.xrk`/`.xrz` file on the window and convert.
 
             > **Unsigned builds only:** if this build was not notarized (no signing
             > secrets configured), macOS Gatekeeper will warn on first launch —
             > right-click the app → **Open** → **Open**, or run
-            > `xattr -dr com.apple.quarantine /Applications/XRKConverter.app`.
+            > `xattr -dr com.apple.quarantine /Applications/Trace.app`.
             > Notarized builds open normally.
 
             Requires macOS 13+ on Apple Silicon.

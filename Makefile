@@ -38,13 +38,13 @@ lint:
 bundle:
 	bash scripts/bundle_python.sh
 
-## app: build the distributable XRKConverter.app
+## app: build the distributable Trace.app
 app:
 	bash scripts/build_app.sh
 
 ## run: build (if needed) and launch the app
 run: app
-	open dist/XRKConverter.app
+	open dist/Trace.app
 
 ## ci: what the CI pipeline runs
 ci: lint coverage e2e

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Assemble XRKConverter.app: build the Swift binary, then lay out a macOS
+# Assemble Trace.app: build the Swift binary, then lay out a macOS
 # application bundle with the embedded Python runtime + converter script.
 set -euo pipefail
 
@@ -7,11 +7,11 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_SRC="$ROOT/app"
 RES="$APP_SRC/Resources"
 DIST="$ROOT/dist"
-APP="$DIST/XRKConverter.app"
+APP="$DIST/Trace.app"
 CONTENTS="$APP/Contents"
 
 VERSION="0.1.0"
-BUNDLE_ID="com.xrkconverter.app"
+BUNDLE_ID="com.zenardi.trace"
 
 # 0. Ensure the embedded Python is present.
 if [ ! -x "$RES/python/bin/python3" ] || [ ! -f "$RES/xrk2csv.py" ]; then
@@ -28,7 +28,7 @@ BIN="$APP_SRC/.build/release/XRKConverter"
 echo "==> Assembling $APP"
 rm -rf "$APP"
 mkdir -p "$CONTENTS/MacOS" "$CONTENTS/Resources"
-cp "$BIN" "$CONTENTS/MacOS/XRKConverter"
+cp "$BIN" "$CONTENTS/MacOS/Trace"
 printf 'APPL????' > "$CONTENTS/PkgInfo"
 
 # 3. Copy the embedded runtime + converter into Resources.
@@ -47,7 +47,7 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleExecutable</key><string>XRKConverter</string>
+    <key>CFBundleExecutable</key><string>Trace</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
     <key>CFBundleName</key><string>Trace</string>
@@ -96,14 +96,14 @@ if [ -n "$SIGN_IDENTITY" ]; then
       --entitlements "$ENTITLEMENTS" -s "$SIGN_IDENTITY" "$pybin"
   done
 
-  codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$CONTENTS/MacOS/XRKConverter"
+  codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$CONTENTS/MacOS/Trace"
   codesign --force --options runtime --timestamp \
     --entitlements "$ENTITLEMENTS" -s "$SIGN_IDENTITY" "$APP"
   codesign --verify --strict --verbose=2 "$APP"
   echo "==> Signed and verified."
 else
   echo "==> Ad-hoc code signing (local use; not notarizable)"
-  codesign --force --sign - "$CONTENTS/MacOS/XRKConverter" >/dev/null 2>&1 || true
+  codesign --force --sign - "$CONTENTS/MacOS/Trace" >/dev/null 2>&1 || true
   codesign --force --sign - "$APP" >/dev/null 2>&1 || true
 fi
 
