@@ -1,0 +1,11 @@
+line-length = 110
+target-version = "py310"
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = [
+    "E741",  # ambiguous variable names (lat/lon math uses short names)
+]
+
+[lint.per-file-ignores]
+"core/tests/*" = ["E402"]  # imports after sys.path manipulation

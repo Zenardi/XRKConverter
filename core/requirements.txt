@@ -1,0 +1,2 @@
+# Runtime dependency for the converter. libxrk pulls in numpy + pyarrow.
+libxrk>=0.12.0

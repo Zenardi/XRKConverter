@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, test, coverage (95%) & E2E
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Toolchain versions
+        run: |
+          swift --version
+          python3 --version
+          xcodebuild -version || true
+
+      - name: Install lint tooling
+        run: python3 -m pip install --upgrade pip ruff
+
+      - name: Lint (ruff)
+        run: python3 -m ruff check core scripts
+
+      - name: Fetch test fixtures
+        run: bash scripts/fetch_samples.sh
+
+      - name: Coverage gate (Python + Swift Core, >= 95%)
+        run: bash scripts/coverage.sh
+
+      - name: End-to-end conversion + validation
+        run: bash scripts/e2e.sh
+
+  trivy:
+    name: Trivy CVE scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy filesystem scan (vuln, secret, misconfig)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table

@@ -1,0 +1,21 @@
+# Build artifacts
+/dist/
+/.cache/
+/.cache-swift-cov.json
+.coverage
+app/.build/
+app/Resources/python/
+app/Resources/xrk2csv.py
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Large sample data (kept locally, not committed)
+samples/*.xrk
+samples/*.xrz
+samples/*_reference.csv
+
+# macOS
+.DS_Store
