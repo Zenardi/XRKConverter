@@ -1,14 +1,25 @@
-# XRK → RaceChrono CSV
+<h1 align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="branding/trace-wordmark-dark.svg">
+    <img src="branding/trace-wordmark.svg" alt="Trace — XRK → CSV for RaceChrono" width="460">
+  </picture>
+</h1>
 
-A native macOS app that converts AiM **`.xrk` / `.xrz`** telemetry files (from
-RaceStudio 3 / MyChron) into an **AiM CSV** that **RaceChrono** can import — no
-Windows, no RaceStudio desktop, no proprietary AiM DLL required.
+<p align="center">
+  <b>Trace</b> is a native macOS app that converts AiM <b><code>.xrk</code> / <code>.xrz</code></b>
+  telemetry files (from RaceStudio 3 / MyChron) into an <b>AiM CSV</b> that <b>RaceChrono</b>
+  can import — no Windows, no RaceStudio desktop, no proprietary AiM DLL required.
+</p>
 
 The heavy lifting (parsing AiM's undocumented binary format) is done by
 [**libxrk**](https://github.com/m3rlin45/libxrk) — a pure, MIT-licensed,
 cross-platform reimplementation with native Apple-Silicon wheels. This project
 wraps it in a Python converter + a SwiftUI front end, with Python embedded so
 the shipped `.app` is self-contained.
+
+![trace-app](./app/trace.png)
+
+![trace-app-file-loaded](app/trace-file-loaded.png)
 
 ## Status
 
@@ -30,9 +41,11 @@ XRKConverter/
 │   │   ├── App.swift            # SwiftUI UI (drag-drop, rate, progress, save)
 │   │   └── ConversionModel.swift# runs the Python converter, parses JSON stream
 │   └── Resources/python/    # embedded, relocatable CPython + libxrk (build artifact)
+├── branding/               # logo: trace-appicon.svg, AppIcon.icns, wordmark, mono mark
 ├── scripts/
 │   ├── bundle_python.sh     # download python-build-standalone + pip install libxrk
-│   └── build_app.sh         # swift build + assemble XRKConverter.app
+│   ├── build_app.sh         # swift build + assemble XRKConverter.app (embeds AppIcon.icns)
+│   └── build_icons.sh       # regenerate AppIcon.icns from the SVG master
 ├── samples/                 # test .xrk files + a RaceStudio reference .csv
 └── dist/XRKConverter.app    # the built application
 ```
@@ -184,6 +197,40 @@ Users and Access → Integrations → App Store Connect API. Base64 a file with
 `base64 -i AuthKey_XXXX.p8 | pbcopy`. Entitlements live in
 `app/XRKConverter.entitlements` (library-validation exemption for the embedded
 Python's compiled extensions).
+
+## Branding
+
+<img src="branding/trace-appicon-512.png" alt="Trace app icon" width="120" align="left" hspace="18" vspace="4">
+
+The app is called **Trace** — a telemetry *trace* (the brake / throttle / GPS curve
+you analyse) and the act of *tracing* your data out of the locked XRK format into a
+CSV. The mark is a single amber→red racing line clipping a glowing **apex node** on a
+carbon instrument-panel tile — it reads at once as a racing line through a corner and
+a data trace being plotted.
+
+All assets live in [`branding/`](branding/):
+
+| File | Purpose |
+|---|---|
+| `trace-appicon.svg` | Master app icon — fully vector |
+| `AppIcon.icns` | 10-size macOS iconset (16→1024), embedded into the `.app` by `build_app.sh` |
+| `trace-wordmark.svg` + `-dark.svg` | Horizontal lockup — light/dark pair, swapped via `<picture>` |
+| `trace-mark-mono.svg` | Single-colour mark (`currentColor`) for menu-bar / favicon |
+| `trace-appicon-{1024,512}.png` | Raster renders for docs |
+
+The icon is wired into the bundle through `Info.plist` (`CFBundleIconFile = AppIcon`).
+Both the icon and the wordmark regenerate from source with stock macOS tools only
+(no ImageMagick / Inkscape):
+
+```bash
+bash  scripts/build_icons.sh      # SVG master -> AppIcon.icns (+ doc PNGs)
+swift scripts/build_wordmark.swift # outlines the wordmark text to vector paths
+```
+
+The wordmark text is **outlined to vector paths** (via CoreText), so it renders
+identically everywhere with no font dependency.
+
+<br clear="left">
 
 ## Credits
 
