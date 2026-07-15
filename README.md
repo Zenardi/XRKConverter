@@ -28,6 +28,32 @@ own reference CSV export to **millimetre GPS accuracy** and ~zero speed error
 (see below). The one step that still needs your hardware is confirming the CSV
 imports cleanly into RaceChrono with one of *your* MyChron files.
 
+## Download & install
+
+Grab the latest **`Trace-macos-arm64.dmg`** from the
+[**Releases**](https://github.com/Zenardi/XRKConverter/releases) page
+(Apple Silicon, macOS 13+).
+
+1. Open the `.dmg` and **drag `Trace.app` into your `Applications` folder.**
+   You can't run it from the mounted disk image — copy it out first.
+2. **First launch only.** The app is code-signed but not yet *notarized* by
+   Apple, so macOS shows a *“cannot verify… malware”* warning the first time.
+   Clear it once, either way:
+   - **No Terminal:** double-click Trace, dismiss the warning, then open
+     **System Settings → Privacy & Security**, scroll down to the line about
+     Trace, and click **Open Anyway** → **Open**.
+   - **Terminal:** `xattr -dr com.apple.quarantine /Applications/Trace.app`
+3. After that one-time step it opens normally on every later launch (just
+   double-click — no warnings).
+
+> Copying to `Applications` alone isn't enough — because the build isn't
+> notarized, the download stays “quarantined” until you do step 2. It's a
+> **one-time** action per download, not per launch. The warning is only about
+> the missing paid Apple signature; the app is self-contained and runs entirely
+> offline. *(Maintainers: add the `MACOS_*` secrets — see
+> [Signed & notarized releases](#signed--notarized-releases) — to ship notarized
+> builds that open with no warning at all.)*
+
 ## Architecture (Option A: SwiftUI + embedded Python)
 
 ```
