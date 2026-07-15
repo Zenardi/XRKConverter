@@ -2,13 +2,16 @@ import SwiftUI
 
 // MARK: - The mark, drawn live (same bezier as the app icon)
 
+/// Map the icon's 824-unit inner box (origin 100,100) into `rect`.
+private func iconPoint(_ rect: CGRect, _ x: CGFloat, _ y: CGFloat) -> CGPoint {
+    CGPoint(x: rect.minX + (x - 100) * rect.width / 824,
+            y: rect.minY + (y - 100) * rect.height / 824)
+}
+
 /// The racing line clipping the apex — mapped from the icon's 824-unit inner box.
 struct TraceMark: Shape {
     func path(in rect: CGRect) -> Path {
-        let sx = rect.width / 824, sy = rect.height / 824
-        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: rect.minX + (x - 100) * sx, y: rect.minY + (y - 100) * sy)
-        }
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { iconPoint(rect, x, y) }
         var path = Path()
         path.move(to: p(175, 600))
         path.addCurve(to: p(470, 812), control1: p(250, 745), control2: p(355, 812))
@@ -20,10 +23,7 @@ struct TraceMark: Shape {
 /// The faint "ghost" trace (raw XRK before conversion).
 struct TraceGhost: Shape {
     func path(in rect: CGRect) -> Path {
-        let sx = rect.width / 824, sy = rect.height / 824
-        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: rect.minX + (x - 100) * sx, y: rect.minY + (y - 100) * sy)
-        }
+        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { iconPoint(rect, x, y) }
         var path = Path()
         path.move(to: p(157, 554))
         path.addCurve(to: p(452, 766), control1: p(232, 699), control2: p(337, 766))
@@ -171,6 +171,7 @@ struct GhostButton: View {
     var action: () -> Void
     @State private var hover = false
     @FocusState private var focused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
@@ -190,6 +191,41 @@ struct GhostButton: View {
         .focusable()
         .focused($focused)
         .onHover { hover = $0 }
-        .animation(.easeOut(duration: 0.15), value: hover)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hover)
+    }
+}
+
+/// One sample-rate option. Keyboard-focusable with a visible focus ring
+/// (matches the other custom buttons) — restores the a11y the segmented
+/// picker used to provide.
+struct RatePill: View {
+    var hz: Double
+    var selected: Bool
+    var disabled: Bool
+    var action: () -> Void
+    @State private var hover = false
+    @FocusState private var focused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: action) {
+            Text("\(Int(hz))")
+                .font(Trace.mono(13, selected ? .semibold : .regular))
+                .foregroundStyle(selected ? Trace.carbon0 : Trace.inkDim)
+                .frame(width: 44, height: 30)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(selected ? AnyShapeStyle(Trace.heat) : AnyShapeStyle(Trace.carbon2)))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(focused ? Trace.amber : Trace.line,
+                                  lineWidth: focused ? 2 : (selected ? 0 : 1)))
+                .brightness(hover && !disabled ? 0.05 : 0)
+        }
+        .buttonStyle(.plain)
+        .focusable(!disabled)
+        .focused($focused)
+        .disabled(disabled)
+        .onHover { hover = $0 }
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: hover)
+        .accessibilityLabel("\(Int(hz)) hertz")
     }
 }

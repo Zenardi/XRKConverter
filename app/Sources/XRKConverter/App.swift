@@ -83,7 +83,7 @@ struct ContentView: View {
                 return false
             } isTargeted: { isTargeted = $0 }
             .accessibilityLabel("Drop an .xrk or .xrz file here, or click to browse")
-            .animation(.easeOut(duration: 0.15), value: isTargeted)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.15), value: isTargeted)
     }
 
     @ViewBuilder private var dropContent: some View {
@@ -120,7 +120,11 @@ struct ContentView: View {
                 Text("SAMPLE RATE").font(Trace.mono(11, .medium)).tracking(1).foregroundStyle(Trace.inkFaint)
                 Spacer()
                 HStack(spacing: 6) {
-                    ForEach([10.0, 20.0, 25.0, 50.0], id: \.self) { ratePill($0) }
+                    ForEach([10.0, 20.0, 25.0, 50.0], id: \.self) { hz in
+                        RatePill(hz: hz, selected: model.rateHz == hz, disabled: model.isRunning) {
+                            withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { model.rateHz = hz }
+                        }
+                    }
                     Text("Hz").font(Trace.mono(11)).foregroundStyle(Trace.inkFaint)
                 }
             }
@@ -128,27 +132,6 @@ struct ContentView: View {
                 .font(Trace.mono(10.5)).foregroundStyle(Trace.inkFaint)
         }
         .tracePanel()
-    }
-
-    private func ratePill(_ hz: Double) -> some View {
-        let selected = model.rateHz == hz
-        return Button {
-            if !model.isRunning {
-                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { model.rateHz = hz }
-            }
-        } label: {
-            Text("\(Int(hz))")
-                .font(Trace.mono(13, selected ? .semibold : .regular))
-                .foregroundStyle(selected ? Trace.carbon0 : Trace.inkDim)
-                .frame(width: 44, height: 30)
-                .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(selected ? AnyShapeStyle(Trace.heat) : AnyShapeStyle(Trace.carbon2)))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .strokeBorder(Trace.line, lineWidth: selected ? 0 : 1))
-        }
-        .buttonStyle(.plain)
-        .disabled(model.isRunning)
-        .accessibilityLabel("\(Int(hz)) hertz")
     }
 
     // MARK: - Status
@@ -211,10 +194,7 @@ struct ContentView: View {
                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: r.output)])
                 }
                 GhostButton(title: "Convert Another", systemImage: "arrow.clockwise") {
-                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
-                        model.inputURL = nil
-                        model.state = .idle
-                    }
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { model.reset() }
                 }
             }
             .padding(.top, 2)
