@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" role="img" aria-label="Trace app icon">
+  <defs>
+    <linearGradient id="bg" x1="512" y1="100" x2="512" y2="924" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#272C34"/>
+      <stop offset="0.55" stop-color="#14181D"/>
+      <stop offset="1" stop-color="#090B0E"/>
+    </linearGradient>
+    <linearGradient id="trace" x1="175" y1="812" x2="858" y2="238" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFC24A"/>
+      <stop offset="0.5" stop-color="#FF7A1A"/>
+      <stop offset="1" stop-color="#FF3D2E"/>
+    </linearGradient>
+    <radialGradient id="spec" cx="512" cy="150" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vig" cx="512" cy="512" r="620" gradientUnits="userSpaceOnUse">
+      <stop offset="0.6" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.45"/>
+    </radialGradient>
+    <radialGradient id="dot" cx="470" cy="812" r="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#FFE9C2"/>
+      <stop offset="1" stop-color="#FFB84D"/>
+    </radialGradient>
+    <filter id="glow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+    <clipPath id="squircle">
+      <rect x="100" y="100" width="824" height="824" rx="190" ry="190"/>
+    </clipPath>
+  </defs>
+
+  <!-- carbon tile -->
+  <rect x="100" y="100" width="824" height="824" rx="190" ry="190" fill="url(#bg)"/>
+
+  <g clip-path="url(#squircle)">
+    <!-- telemetry grid -->
+    <g stroke="#FFFFFF" stroke-opacity="0.045" stroke-width="2">
+      <line x1="213" y1="100" x2="213" y2="924"/>
+      <line x1="326" y1="100" x2="326" y2="924"/>
+      <line x1="439" y1="100" x2="439" y2="924"/>
+      <line x1="552" y1="100" x2="552" y2="924"/>
+      <line x1="665" y1="100" x2="665" y2="924"/>
+      <line x1="778" y1="100" x2="778" y2="924"/>
+      <line x1="100" y1="213" x2="924" y2="213"/>
+      <line x1="100" y1="326" x2="924" y2="326"/>
+      <line x1="100" y1="439" x2="924" y2="439"/>
+      <line x1="100" y1="552" x2="924" y2="552"/>
+      <line x1="100" y1="665" x2="924" y2="665"/>
+      <line x1="100" y1="778" x2="924" y2="778"/>
+    </g>
+
+    <!-- specular sheen -->
+    <rect x="100" y="100" width="824" height="824" fill="url(#spec)"/>
+
+    <!-- ghost / raw trace (the "before" — cool, thin) -->
+    <path d="M 157,554 C 232,699 337,766 452,766 C 587,766 682,499 840,192"
+          fill="none" stroke="#8FA6C0" stroke-opacity="0.28" stroke-width="30"
+          stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- main trace glow -->
+    <path d="M 175,600 C 250,745 355,812 470,812 C 605,812 700,545 858,238"
+          fill="none" stroke="url(#trace)" stroke-width="82"
+          stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)" opacity="0.55"/>
+    <!-- main trace crisp (the racing line / converted trace) -->
+    <path d="M 175,600 C 250,745 355,812 470,812 C 605,812 700,545 858,238"
+          fill="none" stroke="url(#trace)" stroke-width="82"
+          stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- apex marker -->
+    <circle cx="470" cy="812" r="72" fill="#FFB84D" opacity="0.35" filter="url(#glow)"/>
+    <circle cx="470" cy="812" r="36" fill="url(#dot)"/>
+    <circle cx="470" cy="812" r="36" fill="none" stroke="#FFFFFF" stroke-opacity="0.9" stroke-width="4"/>
+
+    <!-- vignette -->
+    <rect x="100" y="100" width="824" height="824" fill="url(#vig)"/>
+  </g>
+
+  <!-- edge hairline -->
+  <rect x="101.5" y="101.5" width="821" height="821" rx="188.5" ry="188.5"
+        fill="none" stroke="#FFFFFF" stroke-opacity="0.10" stroke-width="3"/>
+</svg>

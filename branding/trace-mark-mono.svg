@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 1024 1024" role="img" aria-label="Trace mark">
+  <!-- Single-color mark: racing line clipping the apex. Uses currentColor so it -->
+  <!-- inherits text color (menu-bar/template icon, favicon, stamps). -->
+  <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 175,600 C 250,745 355,812 470,812 C 605,812 700,545 858,238" stroke-width="86"/>
+  </g>
+  <circle cx="470" cy="812" r="40" fill="currentColor"/>
+</svg>

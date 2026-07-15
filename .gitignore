@@ -17,5 +17,10 @@ samples/*.xrk
 samples/*.xrz
 samples/*_reference.csv
 
+# Branding: SVG masters + generated AppIcon.icns/PNGs are committed;
+# only the scratch render dir is ignored.
+branding/.render/
+branding/*.iconset/
+
 # macOS
 .DS_Store

@@ -36,6 +36,11 @@ echo "==> Copying embedded Python + converter"
 cp -R "$RES/python" "$CONTENTS/Resources/python"
 cp "$RES/xrk2csv.py" "$CONTENTS/Resources/xrk2csv.py"
 
+# 3b. App icon (Trace mark). Committed .icns so the build needs no rasterizer.
+if [ -f "$ROOT/branding/AppIcon.icns" ]; then
+  cp "$ROOT/branding/AppIcon.icns" "$CONTENTS/Resources/AppIcon.icns"
+fi
+
 # 4. Info.plist
 cat > "$CONTENTS/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -43,9 +48,10 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key><string>XRKConverter</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
-    <key>CFBundleName</key><string>XRK to CSV</string>
-    <key>CFBundleDisplayName</key><string>XRK → CSV</string>
+    <key>CFBundleName</key><string>Trace</string>
+    <key>CFBundleDisplayName</key><string>Trace</string>
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>CFBundleShortVersionString</key><string>${VERSION}</string>
     <key>CFBundleVersion</key><string>1</string>
