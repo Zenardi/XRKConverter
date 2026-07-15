@@ -159,9 +159,31 @@ Test layout:
   git tag v0.1.0 && git push origin v0.1.0   # cuts a downloadable release
   ```
 
-  The release build is ad-hoc signed (not notarized); first launch needs a
-  right-click → Open, or `xattr -dr com.apple.quarantine XRKConverter.app`.
-  Add an Apple Developer ID + notarization step for warning-free distribution.
+#### Signed & notarized releases
+
+The release workflow **signs (Developer ID + hardened runtime) and notarizes**
+the build automatically — but only when the required secrets are set. Without
+them it falls back to an ad-hoc signature (first launch then needs a right-click
+→ Open, or `xattr -dr com.apple.quarantine XRKConverter.app`).
+
+To enable warning-free downloads, add these **GitHub repository secrets**
+(Settings → Secrets and variables → Actions):
+
+| Secret | What it is |
+|---|---|
+| `MACOS_CERTIFICATE_P12_BASE64` | `base64` of your *Developer ID Application* cert exported as `.p12` |
+| `MACOS_CERTIFICATE_PASSWORD` | password for that `.p12` |
+| `MACOS_SIGN_IDENTITY` | e.g. `Developer ID Application: Your Name (TEAMID)` |
+| `MACOS_NOTARY_KEY_P8_BASE64` | `base64` of your App Store Connect API key (`AuthKey_XXXX.p8`) |
+| `MACOS_NOTARY_KEY_ID` | the key's Key ID |
+| `MACOS_NOTARY_ISSUER_ID` | your App Store Connect issuer ID |
+
+Get the cert from the [Apple Developer](https://developer.apple.com/account/resources/certificates)
+portal (needs a paid Developer account) and the API key from App Store Connect →
+Users and Access → Integrations → App Store Connect API. Base64 a file with
+`base64 -i AuthKey_XXXX.p8 | pbcopy`. Entitlements live in
+`app/XRKConverter.entitlements` (library-validation exemption for the embedded
+Python's compiled extensions).
 
 ## Credits
 

@@ -66,11 +66,40 @@ cat > "$CONTENTS/Info.plist" <<PLIST
 </plist>
 PLIST
 
-# 5. Ad-hoc code sign so it runs locally on Apple Silicon.
-echo "==> Ad-hoc code signing"
-codesign --force --sign - --timestamp=none \
-  "$CONTENTS/MacOS/XRKConverter" >/dev/null 2>&1 || true
-codesign --force --sign - "$APP" >/dev/null 2>&1 || true
+# 5. Code sign.
+#    With SIGN_IDENTITY (a "Developer ID Application: ..." identity) we deep-sign
+#    every embedded Mach-O with the hardened runtime + entitlements so the app
+#    can be notarized. Otherwise we ad-hoc sign for local use.
+SIGN_IDENTITY="${SIGN_IDENTITY:-}"
+ENTITLEMENTS="${ENTITLEMENTS:-$APP_SRC/XRKConverter.entitlements}"
+
+if [ -n "$SIGN_IDENTITY" ]; then
+  echo "==> Signing with Developer ID (hardened runtime): $SIGN_IDENTITY"
+  # Inner Mach-O first (interpreter, dylibs, extension modules), then the main
+  # executable, then the bundle. codesign must sign nested code before its host.
+  while IFS= read -r f; do
+    if file -b "$f" | grep -q 'Mach-O'; then
+      codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$f"
+    fi
+  done < <(find "$CONTENTS/Resources" -type f)
+
+  # The interpreter loads compiled extensions, so give it the entitlements.
+  for pybin in "$CONTENTS/Resources/python/bin/"python3.*; do
+    [ -f "$pybin" ] && file -b "$pybin" | grep -q 'Mach-O' || continue
+    codesign --force --options runtime --timestamp \
+      --entitlements "$ENTITLEMENTS" -s "$SIGN_IDENTITY" "$pybin"
+  done
+
+  codesign --force --options runtime --timestamp -s "$SIGN_IDENTITY" "$CONTENTS/MacOS/XRKConverter"
+  codesign --force --options runtime --timestamp \
+    --entitlements "$ENTITLEMENTS" -s "$SIGN_IDENTITY" "$APP"
+  codesign --verify --strict --verbose=2 "$APP"
+  echo "==> Signed and verified."
+else
+  echo "==> Ad-hoc code signing (local use; not notarizable)"
+  codesign --force --sign - "$CONTENTS/MacOS/XRKConverter" >/dev/null 2>&1 || true
+  codesign --force --sign - "$APP" >/dev/null 2>&1 || true
+fi
 
 echo "==> Done: $APP"
 du -sh "$APP"
