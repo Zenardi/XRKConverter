@@ -10,7 +10,8 @@ DIST="$ROOT/dist"
 APP="$DIST/Trace.app"
 CONTENTS="$APP/Contents"
 
-VERSION="0.1.0"
+# CI passes VERSION from the release tag (see release.yml); defaults for local builds.
+VERSION="${VERSION:-0.2.0}"
 BUNDLE_ID="com.zenardi.trace"
 
 # 0. Ensure the embedded Python is present.

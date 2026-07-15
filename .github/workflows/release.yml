@@ -64,6 +64,9 @@ jobs:
           ENTITLEMENTS: app/XRKConverter.entitlements
         run: |
           bash scripts/bundle_python.sh
+          # Derive the app version from the tag (v0.2.0 -> 0.2.0); leave default for non-tag dispatch.
+          REF="${GITHUB_REF_NAME#v}"
+          case "$REF" in [0-9]*) export VERSION="$REF" ;; esac
           bash scripts/build_app.sh
 
       - name: Build DMG
