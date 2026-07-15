@@ -8,7 +8,8 @@ struct XRKConverterApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .frame(minWidth: 460, idealWidth: 520, minHeight: 500)
+                .frame(minWidth: 480, idealWidth: 560, minHeight: 560)
+                .preferredColorScheme(.dark)
         }
         .windowResizability(.contentSize)
         .commands { CommandGroup(replacing: .newItem) {} }
@@ -18,140 +19,225 @@ struct XRKConverterApp: App {
 struct ContentView: View {
     @StateObject private var model = ConversionModel()
     @State private var isTargeted = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var isSuccess: Bool { if case .success = model.state { return true }; return false }
+
+    // The header logo doubles as a live plot: its trace draws with conversion progress.
+    private var headerTrim: CGFloat {
+        if case let .running(p, _) = model.state { return max(0.02, CGFloat(p)) }
+        return 1
+    }
 
     var body: some View {
-        VStack(spacing: 18) {
-            header
-            dropZone
-            if model.inputURL != nil { ratePicker }
-            statusArea
-            Spacer(minLength: 0)
-            actionBar
+        ZStack {
+            HUDBackground()
+            VStack(spacing: 18) {
+                header
+                dropZone
+                if model.inputURL != nil && !isSuccess { ratePicker }
+                statusArea
+                Spacer(minLength: 0)
+                if !isSuccess { actionBar }
+            }
+            .padding(22)
         }
-        .padding(24)
     }
+
+    // MARK: - Header
 
     private var header: some View {
-        VStack(spacing: 4) {
-            Text("XRK → RaceChrono CSV")
-                .font(.system(size: 22, weight: .semibold))
-            Text("Convert AiM MyChron / RaceStudio .xrk files for RaceChrono")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        HStack(spacing: 14) {
+            TraceTile(size: 52, trim: headerTrim)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.4), value: headerTrim)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Trace")
+                    .font(Trace.display(30, .heavy)).tracking(-0.5)
+                    .foregroundStyle(Trace.ink)
+                Text("XRK → CSV · for RaceChrono")
+                    .font(Trace.mono(11, .medium)).tracking(0.4)
+                    .foregroundStyle(Trace.inkDim)
+            }
+            Spacer()
         }
     }
 
+    // MARK: - Drop zone
+
     private var dropZone: some View {
-        let accent = isTargeted ? Color.accentColor : Color.secondary.opacity(0.4)
-        return RoundedRectangle(cornerRadius: 14)
-            .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [8, 6]))
-            .foregroundStyle(accent)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Color.secondary.opacity(isTargeted ? 0.12 : 0.05)))
+        let hasFile = model.inputURL != nil
+        return RoundedRectangle(cornerRadius: 16, style: .continuous)
+            .fill(Trace.carbon2.opacity(isTargeted ? 0.95 : 0.55))
             .frame(height: 150)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .strokeBorder(style: StrokeStyle(lineWidth: isTargeted ? 2 : 1.5, dash: hasFile ? [] : [7, 6]))
+                    .foregroundStyle(isTargeted ? Trace.orange : (hasFile ? Trace.lineStrong : Trace.line))
+            )
             .overlay(dropContent)
-            .contentShape(Rectangle())
+            .shadow(color: isTargeted ? Trace.orange.opacity(0.35) : .clear, radius: 18, y: 6)
+            .contentShape(RoundedRectangle(cornerRadius: 16))
             .onTapGesture { browse() }
             .dropDestination(for: URL.self) { urls, _ in
                 if let u = urls.first { model.setInput(u); return true }
                 return false
             } isTargeted: { isTargeted = $0 }
+            .accessibilityLabel("Drop an .xrk or .xrz file here, or click to browse")
+            .animation(.easeOut(duration: 0.15), value: isTargeted)
     }
 
-    private var dropContent: some View {
-        VStack(spacing: 8) {
-            Image(systemName: model.inputURL == nil ? "arrow.down.doc" : "doc.badge.gearshape")
-                .font(.system(size: 34, weight: .light))
-                .foregroundStyle(.secondary)
-            if let url = model.inputURL {
-                Text(url.lastPathComponent).font(.headline).lineLimit(1).truncationMode(.middle)
-                Text("Click to choose a different file").font(.caption).foregroundStyle(.secondary)
-            } else {
-                Text("Drop an .xrk or .xrz file here").font(.headline)
-                Text("or click to browse").font(.caption).foregroundStyle(.secondary)
+    @ViewBuilder private var dropContent: some View {
+        if let url = model.inputURL {
+            VStack(spacing: 9) {
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 27)).foregroundStyle(Trace.orange)
+                Text(url.lastPathComponent)
+                    .font(Trace.mono(13, .medium)).foregroundStyle(Trace.ink)
+                    .lineLimit(1).truncationMode(.middle).padding(.horizontal, 24)
+                HStack(spacing: 8) {
+                    Chip(text: "READY", color: Trace.good)
+                    Text("click to replace").font(Trace.mono(10.5)).foregroundStyle(Trace.inkFaint)
+                }
+            }
+        } else {
+            VStack(spacing: 10) {
+                Image(systemName: "arrow.down.circle")
+                    .font(.system(size: 32, weight: .light))
+                    .foregroundStyle(isTargeted ? Trace.orange : Trace.inkDim)
+                Text("Drop an .xrk or .xrz file")
+                    .font(.system(size: 15, weight: .medium)).foregroundStyle(Trace.ink)
+                Text("or click to browse")
+                    .font(Trace.mono(11)).foregroundStyle(Trace.inkFaint)
             }
         }
-        .padding()
     }
+
+    // MARK: - Rate picker
 
     private var ratePicker: some View {
-        HStack {
-            Text("Sample rate").foregroundStyle(.secondary)
-            Spacer()
-            Picker("", selection: $model.rateHz) {
-                Text("10 Hz").tag(10.0)
-                Text("20 Hz").tag(20.0)
-                Text("25 Hz").tag(25.0)
-                Text("50 Hz").tag(50.0)
+        VStack(alignment: .leading, spacing: 9) {
+            HStack {
+                Text("SAMPLE RATE").font(Trace.mono(11, .medium)).tracking(1).foregroundStyle(Trace.inkFaint)
+                Spacer()
+                HStack(spacing: 6) {
+                    ForEach([10.0, 20.0, 25.0, 50.0], id: \.self) { ratePill($0) }
+                    Text("Hz").font(Trace.mono(11)).foregroundStyle(Trace.inkFaint)
+                }
             }
-            .pickerStyle(.segmented)
-            .frame(width: 260)
-            .disabled(model.isRunning)
+            Text("20 Hz matches RaceStudio’s export · 25 Hz keeps full GPS resolution")
+                .font(Trace.mono(10.5)).foregroundStyle(Trace.inkFaint)
         }
+        .tracePanel()
     }
+
+    private func ratePill(_ hz: Double) -> some View {
+        let selected = model.rateHz == hz
+        return Button {
+            if !model.isRunning {
+                withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { model.rateHz = hz }
+            }
+        } label: {
+            Text("\(Int(hz))")
+                .font(Trace.mono(13, selected ? .semibold : .regular))
+                .foregroundStyle(selected ? Trace.carbon0 : Trace.inkDim)
+                .frame(width: 44, height: 30)
+                .background(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(selected ? AnyShapeStyle(Trace.heat) : AnyShapeStyle(Trace.carbon2)))
+                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .strokeBorder(Trace.line, lineWidth: selected ? 0 : 1))
+        }
+        .buttonStyle(.plain)
+        .disabled(model.isRunning)
+        .accessibilityLabel("\(Int(hz)) hertz")
+    }
+
+    // MARK: - Status
 
     @ViewBuilder private var statusArea: some View {
         switch model.state {
         case .idle:
             EmptyView()
         case let .running(progress, message):
-            ProgressView(value: progress) {
-                Text(message).font(.caption).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text(message.uppercased())
+                        .font(Trace.mono(11, .medium)).tracking(0.8)
+                        .foregroundStyle(Trace.inkDim).lineLimit(1)
+                    Spacer()
+                    Text("\(Int(progress * 100))%")
+                        .font(Trace.mono(13, .semibold)).foregroundStyle(Trace.orange).monospacedDigit()
+                }
+                HeatProgress(value: progress)
             }
-            .padding(.horizontal, 4)
+            .tracePanel()
         case let .success(result):
             successCard(result)
-        case let .failure(msg):
-            Label(msg, systemImage: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
-                .font(.callout)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color.red.opacity(0.08)))
+        case let .failure(message):
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Trace.red)
+                Text(message).font(.system(size: 13)).foregroundStyle(Trace.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .tracePanel(border: Trace.red.opacity(0.4))
         }
     }
 
     private func successCard(_ r: ConversionResult) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label("Converted successfully", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green).font(.headline)
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 3) {
-                infoRow("Venue", r.venue.isEmpty ? "—" : r.venue)
-                infoRow("Vehicle", r.vehicle.isEmpty ? "—" : r.vehicle)
-                infoRow("Laps", "\(r.laps)")
-                infoRow("Samples", "\(r.samples) @ \(Int(r.rate_hz)) Hz  (\(String(format: "%.0f", r.duration_s)) s)")
-                infoRow("Channels", "\(r.channels)  ·  GPS: \(r.has_gps ? "yes" : "no")")
-            }.font(.callout)
-            if !r.has_gps {
-                Text("No GPS data found — RaceChrono needs GPS for a track map.")
-                    .font(.caption).foregroundStyle(.orange)
-            }
+        VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Button("Reveal in Finder") {
+                Image(systemName: "checkmark.seal.fill").foregroundStyle(Trace.good)
+                Text("CONVERTED").font(Trace.mono(12, .semibold)).tracking(1.2).foregroundStyle(Trace.good)
+                Spacer()
+                Chip(text: r.has_gps ? "GPS LOCKED" : "NO GPS", color: r.has_gps ? Trace.good : Trace.amber)
+            }
+            Rectangle().fill(Trace.line).frame(height: 1)
+            Grid(alignment: .leading, horizontalSpacing: 18, verticalSpacing: 9) {
+                infoRow("VENUE", r.venue.isEmpty ? "—" : r.venue)
+                infoRow("VEHICLE", r.vehicle.isEmpty ? "—" : r.vehicle)
+                infoRow("LAPS", "\(r.laps)")
+                infoRow("SAMPLES", "\(r.samples)  @ \(Int(r.rate_hz)) Hz")
+                infoRow("DURATION", String(format: "%.0f s", r.duration_s))
+                infoRow("CHANNELS", "\(r.channels)")
+            }
+            Text(URL(fileURLWithPath: r.output).lastPathComponent)
+                .font(Trace.mono(11)).foregroundStyle(Trace.inkFaint)
+                .lineLimit(1).truncationMode(.middle)
+            if !r.has_gps {
+                Text("RaceChrono needs GPS for a track map.")
+                    .font(Trace.mono(10.5)).foregroundStyle(Trace.amber)
+            }
+            HStack(spacing: 10) {
+                GhostButton(title: "Reveal in Finder", systemImage: "folder") {
                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: r.output)])
                 }
-                Button("Convert Another") { model.inputURL = nil; model.state = .idle }
-            }.padding(.top, 4)
+                GhostButton(title: "Convert Another", systemImage: "arrow.clockwise") {
+                    withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) {
+                        model.inputURL = nil
+                        model.state = .idle
+                    }
+                }
+            }
+            .padding(.top, 2)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Color.green.opacity(0.07)))
+        .tracePanel(border: Trace.good.opacity(0.25))
     }
 
-    private func infoRow(_ k: String, _ v: String) -> some View {
+    private func infoRow(_ key: String, _ value: String) -> some View {
         GridRow {
-            Text(k).foregroundStyle(.secondary).gridColumnAlignment(.trailing)
-            Text(v)
+            Text(key).font(Trace.mono(11)).foregroundStyle(Trace.inkFaint).gridColumnAlignment(.leading)
+            Text(value).font(Trace.mono(12.5)).foregroundStyle(Trace.ink)
         }
     }
+
+    // MARK: - Action bar
 
     private var actionBar: some View {
-        Button(action: startConvert) {
-            Text(model.isRunning ? "Converting…" : "Convert & Save…")
-                .frame(minWidth: 140)
-        }
+        PrimaryButton(
+            title: model.isRunning ? "Converting…" : "Convert & Save…",
+            systemImage: model.isRunning ? nil : "bolt.fill",
+            disabled: model.inputURL == nil || model.isRunning
+        ) { startConvert() }
         .keyboardShortcut(.defaultAction)
-        .controlSize(.large)
-        .disabled(model.inputURL == nil || model.isRunning)
     }
 
     // MARK: - Actions
